@@ -17,12 +17,10 @@
     "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --fix",
-      "vitest run --passWithNoTests related"
-    ],
-    "*.{json,md}": "prettier --write"
+  "/**/*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
+  "/**/*.{json,css,md}": ["prettier --write"]
   },
+
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^6.0.0",

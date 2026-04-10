@@ -160,7 +160,7 @@ async function main() {
                         Math.floor(Math.random() * customers.length)
                       ].customerId,
                     visitContent: `${idx + 1}件目の訪問: 商品提案および関係構築を実施。次回アポイントを設定。`,
-                    visitTime: `${String(9 + idx * 2).padStart(2, "0")}:00`,
+                    visitTime: new Date(`1970-01-01T${String(9 + idx * 2).padStart(2, "0")}:00:00.000Z`),
                   })
                 ),
               },
