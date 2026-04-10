@@ -32,7 +32,7 @@ model Customer {
   companyName    String   @db.VarChar(200) @map("company_name")
   contactPerson  String   @db.VarChar(100) @map("contact_person")
   phone          String?  @db.VarChar(20)
-  email          String?  @db.VarChar(255)
+  email          String?  @unique @db.VarChar(255)
   address        String?  @db.VarChar(500)
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
