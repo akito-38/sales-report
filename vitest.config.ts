@@ -22,6 +22,12 @@ export default defineConfig({
         "src/**/*.stories.{ts,tsx}",
         "src/app/layout.tsx",
         "src/app/**/page.tsx",
+        // shadcn/ui 自動生成コンポーネントはテスト対象外
+        "src/components/ui/**",
+        // DB クライアントシングルトンはテスト対象外
+        "src/lib/prisma.ts",
+        // 型定義のみのファイル
+        "src/types/**",
       ],
       thresholds: {
         lines: 80,
