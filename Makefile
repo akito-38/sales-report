@@ -11,10 +11,21 @@ TAG          ?= latest
 help: ## コマンド一覧を表示
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-# ── ローカル開発 ──────────────────────────────────────────
-dev: ## 開発サーバーを起動
+# ── ローカル開発（Docker Compose） ──────────────────────
+dev: ## docker compose でローカル開発環境を起動（app + PostgreSQL）
+	docker compose up -d
+	@echo "アプリ起動中... http://localhost:3000"
+
+dev-stop: ## docker compose を停止
+	docker compose down
+
+dev-logs: ## docker compose のログを表示
+	docker compose logs -f
+
+dev-local: ## ローカルで開発サーバーを起動（DB別途起動要）
 	npm run dev
 
+# ── ビルド・テスト ────────────────────────────────────────
 build: ## Next.js をビルド
 	npm run build
 
@@ -27,24 +38,15 @@ lint: ## ESLint を実行
 lint-fix: ## ESLint を自動修正付きで実行
 	npm run lint:fix
 
-# ── ローカル Docker Compose ──────────────────────────────
-compose-up: ## docker compose でローカル環境を起動（app + PostgreSQL）
-	docker compose up -d
-
-compose-down: ## docker compose を停止・削除
-	docker compose down
-
-compose-logs: ## docker compose のログを表示
-	docker compose logs -f
-
+# ── DB 操作（compose 内の DB に対して実行） ──────────────
 migrate: ## Prisma マイグレーションを実行（開発環境）
-	npx prisma migrate dev
+	docker compose exec app npx prisma migrate dev
 
 migrate-reset: ## データベースをリセットしてマイグレーションを再実行
-	npx prisma migrate reset --force
+	docker compose exec app npx prisma migrate reset --force
 
 seed: ## シードデータを投入
-	npx prisma db seed
+	docker compose exec app npx prisma db seed
 
 db-studio: ## Prisma Studio を起動
 	npx prisma studio
