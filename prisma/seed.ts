@@ -2,8 +2,11 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+const MAX_VISITS_PER_REPORT = 4;
+const VISIT_START_HOUR = 9;
+
 async function main() {
-  console.warn("シードデータの投入を開始します...");
+  console.log("シードデータの投入を開始します...");
 
   // 営業担当者の作成（管理者2名・一般8名）
   const salesPersons = await Promise.all([
@@ -109,24 +112,26 @@ async function main() {
     }),
   ]);
 
-  console.warn(`営業担当者 ${salesPersons.length} 名を作成しました`);
+  console.log(`営業担当者 ${salesPersons.length} 名を作成しました`);
 
-  // 顧客の作成（100社）
-  const customerData = Array.from({ length: 100 }, (_, i) => ({
-    companyName: `株式会社サンプル${String(i + 1).padStart(3, "0")}`,
-    contactPerson: `担当者${i + 1}`,
-    phone: `03-${String(Math.floor(1000 + Math.random() * 9000))}-${String(Math.floor(1000 + Math.random() * 9000))}`,
-    email: `contact${i + 1}@sample${i + 1}.co.jp`,
-    address: `東京都千代田区サンプル${i + 1}-1-1`,
-  }));
+  // 顧客の作成（100社）— upsert で冪等性を保証
+  const customers = await Promise.all(
+    Array.from({ length: 100 }, (_, i) =>
+      prisma.customer.upsert({
+        where: { email: `contact${i + 1}@sample${i + 1}.co.jp` },
+        update: {},
+        create: {
+          companyName: `株式会社サンプル${String(i + 1).padStart(3, "0")}`,
+          contactPerson: `担当者${i + 1}`,
+          phone: `03-${String(Math.floor(1000 + Math.random() * 9000))}-${String(Math.floor(1000 + Math.random() * 9000))}`,
+          email: `contact${i + 1}@sample${i + 1}.co.jp`,
+          address: `東京都千代田区サンプル${i + 1}-1-1`,
+        },
+      })
+    )
+  );
 
-  await prisma.customer.createMany({
-    data: customerData,
-    skipDuplicates: true,
-  });
-
-  const customers = await prisma.customer.findMany({ take: 100 });
-  console.warn(`顧客 ${customers.length} 社を作成しました`);
+  console.log(`顧客 ${customers.length} 社を作成しました`);
 
   // 過去3ヶ月分の日報作成（平日のみ、担当者8名分）
   const generalStaff = salesPersons.filter((sp) => !sp.isManager);
@@ -153,14 +158,14 @@ async function main() {
               plan: `翌日の計画: 重要顧客へのフォローアップ訪問を実施予定。提案資料の準備も行う。`,
               visitRecords: {
                 create: Array.from(
-                  { length: Math.floor(1 + Math.random() * 4) },
+                  { length: Math.floor(1 + Math.random() * MAX_VISITS_PER_REPORT) },
                   (_, idx) => ({
                     customerId:
                       customers[
                         Math.floor(Math.random() * customers.length)
                       ].customerId,
                     visitContent: `${idx + 1}件目の訪問: 商品提案および関係構築を実施。次回アポイントを設定。`,
-                    visitTime: `${String(9 + idx * 2).padStart(2, "0")}:00`,
+                    visitTime: `${String(VISIT_START_HOUR + idx * 2).padStart(2, "0")}:00`,
                   })
                 ),
               },
@@ -191,8 +196,8 @@ async function main() {
     }
   }
 
-  console.warn(`日報 ${reportCount} 件を作成しました`);
-  console.warn("シードデータの投入が完了しました");
+  console.log(`日報 ${reportCount} 件を作成しました`);
+  console.log("シードデータの投入が完了しました");
 }
 
 main()
